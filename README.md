@@ -6,9 +6,13 @@
 
 <img src="/images/thumpy_beams.jpg" alt="Thumpy beams" width="80%">
 
+---
+
 ## Upcoming events
 
 ### Saturday, November 22, 2025
+
+---
 
 ## Past events
 
@@ -18,10 +22,8 @@
 
 -   Thumpy was fully mobile this time, rolling over to Brushy Creek dam, since the usual Champion Park pavillion area was fully occupied by another event.
 
-### Sunday, November 2, 2025
+### Saturday, November 1, 2025: **_POSTPONED_**
 
-### _POSTPONED_: Saturday, November 1, 2025
-
--   Postponed to tomorrow/Sunday due to rain.
+-   Postponed to tomorrow/Sunday, November 2, due to rain.
 
 ### Saturday, October 25, 2025
