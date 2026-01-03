@@ -27,18 +27,20 @@
         }
         #main-display {
             font-size: min(15vw, 128px);
-            margin-bottom: 80px;
+            margin-bottom: min(80px, 10vh);
             font-family: 'Fredoka One', sans-serif;
             text-align: center;
             overflow-wrap: break-word;
             word-break: break-word;
+            white-space: nowrap;
+            line-height: 1;
         }
         #controls {
             display: flex;
             flex-direction: row;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 80px;
+            margin-bottom: min(80px, 10vh);
             width: 80%;
             max-width: 800px;
         }
@@ -429,6 +431,27 @@
             centerWrapper.style.paddingTop = `${parameters.offsetHeight}px`;
         }
 
+        function adjustMargins() {
+            const parameters = document.getElementById('parameters');
+            const piano = document.getElementById('piano');
+            const mainDisplay = document.getElementById('main-display');
+            const controls = document.getElementById('controls');
+            const parametersH = parameters.offsetHeight;
+            const pianoH = piano.offsetHeight;
+            const innerH = window.innerHeight;
+            const maxIntrinsic = innerH - parametersH - 2 * pianoH;
+            const h1 = mainDisplay.offsetHeight;
+            const h2 = controls.offsetHeight;
+            let margin = Math.min(80, innerH * 0.1);
+            let intrinsic = h1 + h2 + 2 * margin;
+            if (intrinsic > maxIntrinsic) {
+                margin = (maxIntrinsic - h1 - h2) / 2;
+                margin = Math.max(0, margin);
+            }
+            mainDisplay.style.marginBottom = `${margin}px`;
+            controls.style.marginBottom = `${margin}px`;
+        }
+
         function drawFingers(key, mode, hand) {
             // Remove existing fingers
             const existingFingers = document.querySelectorAll('.finger');
@@ -560,6 +583,9 @@
 
             // Draw fingers
             drawFingers(key, mode, hand);
+
+            // Adjust margins after updating content
+            adjustMargins();
         }
 
         // Initial setup
@@ -569,6 +595,7 @@
             populateModes();
             resizeKeyboard();
             selectRandomKey();
+            adjustMargins();
         };
 
         window.addEventListener('resize', () => {
@@ -576,6 +603,7 @@
             if (currentKey && currentMode && currentHand) {
                 drawFingers(currentKey, currentMode, currentHand);
             }
+            adjustMargins();
         });
     </script>
 </body>
