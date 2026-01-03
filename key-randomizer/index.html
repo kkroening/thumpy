@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Random Musical Key, Mode, and Hand Selector</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap" rel="stylesheet">
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            transition: background-color 0.5s ease;
+        }
+        #app-title {
+            font-size: 150%;
+            margin-top: 20px;
+            margin-bottom: 10%;
+            font-family: 'Fredoka One', sans-serif;
+            text-align: center;
+            font-style: italic;
+        }
+        #main-display {
+            font-size: 800%;
+            margin-bottom: 20px;
+            font-family: 'Fredoka One', sans-serif;
+            text-align: center;
+        }
+        #controls {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 50px;
+        }
+        #left-hand, #right-hand {
+            font-size: 200%;
+            font-family: 'Fredoka One', sans-serif;
+            width: 150px;
+        }
+        #left-hand {
+            text-align: left;
+        }
+        #right-hand {
+            text-align: right;
+        }
+        button {
+            font-size: 24px;
+            padding: 10px 20px;
+            cursor: pointer;
+            margin: 0 40px;
+        }
+        #piano {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 1120px;
+            height: 160px;
+        }
+        .key {
+            box-sizing: border-box;
+            position: absolute;
+        }
+        .key.white {
+            height: 160px;
+            width: 40px;
+            background: #fff;
+            border: 1px solid #000;
+        }
+        .key.black {
+            height: 96px;
+            width: 24px;
+            background: #000;
+            z-index: 1;
+        }
+    </style>
+</head>
+<body>
+    <div id="app-title">Random Musical Key, Mode, and Hand Selector</div>
+    <div id="main-display"></div>
+    <div id="controls">
+        <div id="left-hand"></div>
+        <button onclick="selectRandomKey()">Next Key</button>
+        <div id="right-hand"></div>
+    </div>
+    <script>
+        const keys = ['C', 'G', 'D', 'A', 'E', 'B', 'G♭', 'D♭', 'A♭', 'E♭', 'B♭', 'F'];
+        const modes = ['Ionian', 'Lydian', 'Mixolydian'];
+        const hands = ['Left', 'Right'];
+        const keyColors = {
+            'C': '#FF0000',   // red
+            'G': '#FF7F00',   // orange
+            'D': '#FFFF00',   // yellow
+            'A': '#7FFF00',   // lime
+            'E': '#00FF00',   // green
+            'B': '#00FF7F',   // spring green
+            'G♭': '#00FFFF',  // cyan
+            'D♭': '#007FFF',  // azure
+            'A♭': '#0000FF',  // blue
+            'E♭': '#7F00FF',  // violet
+            'B♭': '#FF00FF',  // magenta
+            'F': '#FF007F'    // rose
+        };
+
+        const flatToSharp = {
+            'G♭': 'F#',
+            'D♭': 'C#',
+            'A♭': 'G#',
+            'E♭': 'D#',
+            'B♭': 'A#'
+        };
+
+        const sharpToFlat = {
+            'C#': 'D♭',
+            'D#': 'E♭',
+            'F#': 'G♭',
+            'G#': 'A♭',
+            'A#': 'B♭'
+        };
+
+        const octaveNotes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+
+        const modeDegrees = {
+            'Ionian': 1,
+            'Lydian': 4,
+            'Mixolydian': 5
+        };
+
+        const semitonesToDegree = {
+            1: 0,
+            4: 5,
+            5: 7
+        };
+
+        const modeIntervals = {
+            'Ionian': [2, 2, 1, 2, 2, 2, 1],
+            'Lydian': [2, 2, 2, 1, 2, 2, 1],
+            'Mixolydian': [2, 2, 1, 2, 2, 1, 2]
+        };
+
+        const leftFingerings = {
+            'C': '14321321',
+            'D♭': '32143213',
+            'D': '14321321',
+            'E♭': '32143213',
+            'E': '14321321',
+            'F': '14321321',
+            'G♭': '43213214',
+            'G': '14321321',
+            'A♭': '32143213',
+            'A': '14321321',
+            'B♭': '32143213',
+            'B': '13214321'
+        };
+
+        const rightFingerings = {
+            'C': '12312341',
+            'D♭': '23123412',
+            'D': '12312341',
+            'E♭': '31234123',
+            'E': '12312341',
+            'F': '12341231',
+            'G♭': '23412312',
+            'G': '12312341',
+            'A♭': '34123123',
+            'A': '12312341',
+            'B♭': '41231234',
+            'B': '12312341'
+        };
+
+        let keyList = [...keys];
+
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        function shuffleTail(array) {
+            const fixed = 3;
+            if (array.length <= fixed) return;
+            const tail = array.slice(fixed);
+            shuffle(tail);
+            array.splice(fixed, tail.length, ...tail);
+        }
+
+        // Initial full shuffle
+        shuffle(keyList);
+
+        function getRelativeKey(tonic, semitones_down) {
+            let note = flatToSharp[tonic] || tonic;
+            let idx = octaveNotes.indexOf(note);
+            let newIdx = (idx - semitones_down + 120) % 12;
+            let newNote = octaveNotes[newIdx];
+            return sharpToFlat[newNote] || newNote;
+        }
+
+        function getScaleNotes(tonic, mode) {
+            let note = flatToSharp[tonic] || tonic;
+            let current = octaveNotes.indexOf(note);
+            let scale = [octaveNotes[current % 12]];
+            const intervals = modeIntervals[mode];
+            for (let i = 0; i < 7; i++) {
+                current = (current + intervals[i]) % 12;
+                scale.push(octaveNotes[current]);
+            }
+            return scale;
+        }
+
+        function createKeyboard() {
+            const piano = document.createElement('div');
+            piano.id = 'piano';
+            let currentLeft = 0;
+            const allNotes = [...octaveNotes, ...octaveNotes, ...octaveNotes, ...octaveNotes];
+            for (let i = 0; i < allNotes.length; i++) {
+                const note = allNotes[i];
+                const isBlack = note.includes('#');
+                const keyElem = document.createElement('div');
+                keyElem.className = `key ${isBlack ? 'black' : 'white'}`;
+                keyElem.dataset.note = note;
+                if (isBlack) {
+                    keyElem.style.left = `${currentLeft - 12}px`;
+                } else {
+                    keyElem.style.left = `${currentLeft}px`;
+                    currentLeft += 40;
+                }
+                piano.appendChild(keyElem);
+            }
+            document.body.appendChild(piano);
+        }
+
+        function selectRandomKey() {
+            const key = keyList.shift();
+            const mode = modes[Math.floor(Math.random() * modes.length)];
+            const hand = hands[Math.floor(Math.random() * hands.length)];
+            document.getElementById('main-display').innerText = `${key} ${mode}`;
+            if (hand === 'Left') {
+                document.getElementById('left-hand').innerHTML = 'Left<br>Hand';
+                document.getElementById('right-hand').innerHTML = '';
+            } else {
+                document.getElementById('left-hand').innerHTML = '';
+                document.getElementById('right-hand').innerHTML = 'Right<br>Hand';
+            }
+            document.body.style.backgroundColor = keyColors[key];
+            keyList.push(key);
+            shuffleTail(keyList);
+
+            // Compute fingering
+            const degree = modeDegrees[mode];
+            const semitones_down = semitonesToDegree[degree];
+            const relativeKey = getRelativeKey(key, semitones_down);
+            let fingeringStr = hand === 'Left' ? leftFingerings[relativeKey] : rightFingerings[relativeKey];
+            const base = fingeringStr.substring(0, 7);
+            const offset = degree - 1;
+            const rotated = base.substring(offset) + base.substring(0, offset);
+            const fingering = rotated + rotated.charAt(0);
+            const fingers = fingering.split('');
+
+            // Get scale notes (in sharp notation)
+            const tonic_note = flatToSharp[key] || key;
+            const scaleNotes = getScaleNotes(key, mode);
+
+            // Ionian tonic
+            const ionian_tonic = flatToSharp[relativeKey] || relativeKey;
+
+            // Determine starting index
+            const allNotes = [...octaveNotes, ...octaveNotes, ...octaveNotes, ...octaveNotes];
+            const tonic_idx = octaveNotes.indexOf(tonic_note);
+            let startIndex;
+            if (hand === 'Left') {
+                startIndex = tonic_idx;
+            } else {
+                startIndex = tonic_idx + 24;
+            }
+
+            // Compute positions
+            const positions = [];
+            let currentPos = startIndex;
+            positions.push(currentPos);
+            const intervals = modeIntervals[mode];
+            for (let i = 0; i < 7; i++) {
+                currentPos += intervals[i];
+                positions.push(currentPos);
+            }
+
+            // Add finger numbers
+            const existingFingers = document.querySelectorAll('.finger');
+            existingFingers.forEach(e => e.remove());
+            const keyElems = document.querySelectorAll('.key');
+            for (let i = 0; i < 8; i++) {
+                const pos = positions[i];
+                if (pos >= allNotes.length) continue;
+                const keyElem = keyElems[pos];
+                const span = document.createElement('span');
+                span.className = 'finger';
+                const finger = fingers[i];
+                span.innerText = finger;
+                span.style.position = 'absolute';
+                span.style.bottom = '5px';
+                span.style.left = '50%';
+                span.style.transform = 'translateX(-50%)';
+                span.style.fontSize = '16px';
+                span.style.fontFamily = "'Fredoka One', sans-serif";
+                span.style.color = keyElem.classList.contains('black') ? 'white' : 'black';
+                if (scaleNotes[i] === ionian_tonic) {
+                    span.style.border = '1px solid currentColor';
+                    span.style.padding = '0px 2px';
+                    span.style.borderRadius = '2px';
+                }
+                keyElem.appendChild(span);
+            }
+        }
+
+        // Initial selection on page load
+        window.onload = () => {
+            createKeyboard();
+            selectRandomKey();
+        };
+    </script>
+</body>
+</html>
